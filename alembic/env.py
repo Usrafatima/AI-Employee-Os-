@@ -8,10 +8,10 @@ from alembic import context
 # Import all models so Alembic can detect tables
 from app.models.user import User
 from app.models.password_reset import PasswordResetToken
-from app.models.company import Company
-from app.models.session import UserSession
-from app.models.crm import ActivityLog, CRMUpdate, Conversation, Customer, Lead
 from app.database.base import Base
+from app.models.company import Company
+
+from app.models.session import UserSession
 
 config = context.config
 
