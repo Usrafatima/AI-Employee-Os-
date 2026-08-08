@@ -27,8 +27,27 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # OpenAI / AI Orchestration Settings
+   # OpenAI / AI Orchestration Settings
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
+
+    # OpenAI / AI Orchestration Settings
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o"
+
+    # Email Integration (SMTP) - Communication Hub
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    EMAILS_FROM_EMAIL: str = ""
+    EMAILS_FROM_NAME: str = "AI Employee OS"
+
+    # WhatsApp Integration - Communication Hub (simulated until configured)
+    WHATSAPP_API_TOKEN: str = ""
+
+    model_config = SettingsConfigDict(
 
     model_config = SettingsConfigDict(
         env_file=".env",
