@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.database.session import Base, engine
 from app.routers import (
     ai,
     auth,
+    communication,
     crm,
     documents,
     invoices,
@@ -16,6 +18,7 @@ from app.routers import (
     users,
     workflows,
 )
+from app.services.reminder_scheduler import start_reminder_scheduler
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -32,6 +35,14 @@ if settings.CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+@app.on_event("startup")
+def on_startup():
+    # Dev convenience: create any tables that don't exist yet (no-op for
+    # tables already managed by Alembic migrations elsewhere).
+    Base.metadata.create_all(bind=engine)
+    start_reminder_scheduler()
 
 
 @app.get("/")
@@ -56,4 +67,5 @@ app.include_router(meetings.router, prefix=f"{settings.API_V1_STR}/meetings", ta
 app.include_router(workflows.router, prefix=f"{settings.API_V1_STR}/workflows", tags=["Workflows"])
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["AI Orchestrator"])
 app.include_router(reports.router, prefix=f"{settings.API_V1_STR}/reports", tags=["Reports"])
+app.include_router(communication.router, prefix=f"{settings.API_V1_STR}/communication", tags=["Communication Hub"])
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard & Analytics"])

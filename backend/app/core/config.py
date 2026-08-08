@@ -30,6 +30,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
 
+    # Email Integration (SMTP) - Communication Hub
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    EMAILS_FROM_EMAIL: str = ""
+    EMAILS_FROM_NAME: str = "AI Employee OS"
+
+    # WhatsApp Integration - Communication Hub (simulated until configured)
+    WHATSAPP_API_TOKEN: str = ""
+
     # Google Gemini (AI Executive Assistant)
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
