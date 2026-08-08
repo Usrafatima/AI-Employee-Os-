@@ -27,11 +27,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # OpenAI / AI Orchestration Settings
-   # OpenAI / AI Orchestration Settings
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o"
-
-    # OpenAI / AI Orchestration Settings
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
 
@@ -47,7 +42,9 @@ class Settings(BaseSettings):
     # WhatsApp Integration - Communication Hub (simulated until configured)
     WHATSAPP_API_TOKEN: str = ""
 
-    model_config = SettingsConfigDict(
+    # Google Gemini (AI Executive Assistant)
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     model_config = SettingsConfigDict(
         env_file=".env",

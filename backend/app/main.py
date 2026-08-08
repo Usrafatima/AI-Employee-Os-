@@ -13,6 +13,7 @@ from app.routers import (
     meetings,
     quotations,
     reports,
+    dashboard,
     tasks,
     users,
     workflows,
@@ -66,5 +67,5 @@ app.include_router(meetings.router, prefix=f"{settings.API_V1_STR}/meetings", ta
 app.include_router(workflows.router, prefix=f"{settings.API_V1_STR}/workflows", tags=["Workflows"])
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["AI Orchestrator"])
 app.include_router(reports.router, prefix=f"{settings.API_V1_STR}/reports", tags=["Reports"])
-app.include_router(reports.router, prefix=f"{settings.API_V1_STR}/reports", tags=["Reports"])
 app.include_router(communication.router, prefix=f"{settings.API_V1_STR}/communication", tags=["Communication Hub"])
+app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard & Analytics"])
