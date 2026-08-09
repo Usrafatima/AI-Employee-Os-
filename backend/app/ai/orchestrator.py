@@ -19,12 +19,35 @@ _KNOWLEDGE_KEYWORDS = (
     "knowledge", "kb", "company info", "policy", "procedure", "guideline",
     "document", "baare me", "about the company",
 )
+# Finance module nouns. Kept separate so finance intents can be matched before
+# the generic "customer" rule below — "create a quotation for customer 5"
+# contains the word "customer" but is a quotation request.
+_QUOTATION_KEYWORDS = ("quotation", "quote", "quotations")
+_INVOICE_KEYWORDS = ("invoice", "invoices", "bill", "billing")
+_PAYMENT_KEYWORDS = ("payment", "paid", "pay ", "received", "receipt")
+_FINANCE_KEYWORDS = _QUOTATION_KEYWORDS + _INVOICE_KEYWORDS + _PAYMENT_KEYWORDS + (
+    "revenue", "outstanding", "finance",
+)
+# Verbs that introduce a finance document. Broader than _BUSINESS_KEYWORDS
+# because finance documents are usually "sent" or "issued" rather than
+# "created" — the project brief's own example is "Send a quotation to John for
+# 25 laptops". Kept separate so CRM intent detection is unaffected: "send a
+# message to a customer" must not become create_customer.
+_FINANCE_ACTION_KEYWORDS = _BUSINESS_KEYWORDS + (
+    "send", "issue", "generate", "prepare", "raise", "draft", "bhejo",
+)
 
 
 def classify_intent(message: str) -> str:
     """Classify the user's message into a coarse intent bucket."""
     text = message.lower()
     if any(k in text for k in _BUSINESS_KEYWORDS) and any(w in text for w in ("customer", "lead")):
+        return "business_action"
+    if any(k in text for k in _FINANCE_ACTION_KEYWORDS) and any(
+        w in text for w in _QUOTATION_KEYWORDS + _INVOICE_KEYWORDS
+    ):
+        return "business_action"
+    if any(k in text for k in _PAYMENT_KEYWORDS) and any(k in text for k in ("record", "against", "receive")):
         return "business_action"
     if any(k in text for k in _SUMMARY_KEYWORDS):
         return "summary"
@@ -39,11 +62,27 @@ def detect_tool(message: str) -> str | None:
     """Detect a supported business tool from the message, if any."""
     text = message.lower()
     wants_create = any(k in text for k in _BUSINESS_KEYWORDS)
+    wants_document = any(k in text for k in _FINANCE_ACTION_KEYWORDS)
+
+    # Finance intents are checked first: a finance request often also mentions
+    # the customer it is for, which would otherwise match create_customer.
+    if wants_document and any(k in text for k in _QUOTATION_KEYWORDS):
+        return "create_quotation"
+    if wants_document and any(k in text for k in _INVOICE_KEYWORDS):
+        return "create_invoice"
+    if any(k in text for k in _PAYMENT_KEYWORDS) and any(
+        k in text for k in ("record", "against", "receive", "mark")
+    ):
+        return "record_payment"
+
     if wants_create and "lead" in text:
         return "create_lead"
     if wants_create and "customer" in text:
         return "create_customer"
     if any(k in text for k in _SUMMARY_KEYWORDS):
+        # A summary mentioning money belongs to the finance module.
+        if any(k in text for k in _FINANCE_KEYWORDS):
+            return "finance_summary"
         return "crm_summary"
     return None
 

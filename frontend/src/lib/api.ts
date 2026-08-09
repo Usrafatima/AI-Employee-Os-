@@ -7,7 +7,31 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000,
+  timeout: 15000,
+});
+
+/**
+ * Key under which the access token issued by the Authentication module is
+ * stored. Endpoints that require authentication (currently the Finance
+ * module) read it from here.
+ */
+export const AUTH_TOKEN_KEY = 'ai_employee_os_token';
+
+export const getAuthToken = (): string | null =>
+  typeof window === 'undefined' ? null : window.localStorage.getItem(AUTH_TOKEN_KEY);
+
+export const setAuthToken = (token: string) => window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+
+export const clearAuthToken = () => window.localStorage.removeItem(AUTH_TOKEN_KEY);
+
+// Attach the bearer token when one is stored. Requests are unchanged when it
+// is absent, so modules that do not yet require authentication are unaffected.
+apiClient.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export interface KpiCardData {
