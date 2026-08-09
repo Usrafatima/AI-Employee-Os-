@@ -28,7 +28,7 @@ export const Sidebar: React.FC = () => {
     { name: 'CRM & Leads', href: '/crm', icon: Target, badge: 'Module 3' },
     { name: 'AI Employees', href: '/ai', icon: Bot, badge: 'Module 4' },
     { name: 'Communication Hub', href: '#', icon: Users, badge: 'Module 5' },
-    { name: 'Finance & Invoices', href: '#', icon: FileText, badge: 'Module 6' },
+    { name: 'Finance & Invoices', href: '/finance', icon: FileText, badge: 'Module 6' },
     { name: 'Productivity Suite', href: '#', icon: Briefcase, badge: 'Module 7' },
     { name: 'Workflow & System', href: '#', icon: Workflow, badge: 'Module 8' },
   ];

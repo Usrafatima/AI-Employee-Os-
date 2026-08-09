@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -17,7 +17,7 @@ from app.models.communication import (
 )
 from app.models.crm import Customer
 from app.services.ai_reply_service import generate_ai_reply
-from app.services.mailer_service import send_email
+from app.services.mailer_service import Attachment, send_email
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +148,20 @@ class CommunicationService:
     # ---- Direct email (quotations / invoices / follow-ups) -------------------
 
     @staticmethod
-    def send_direct_email(db: Session, to_email: str, subject: str | None, body: str, customer_id: int | None) -> EmailLog:
+    def send_direct_email(
+        db: Session,
+        to_email: str,
+        subject: str | None,
+        body: str,
+        customer_id: int | None,
+        attachments: Sequence[Attachment] | None = None,
+    ) -> EmailLog:
+        """Send an email and record it in the email log.
+
+        ``attachments`` is optional and defaults to none, so existing callers
+        are unaffected. The Finance module passes generated quotation, invoice
+        and receipt PDFs through it.
+        """
         if customer_id is not None:
             CommunicationService._get_customer_or_404(db, customer_id)
 
@@ -160,7 +173,7 @@ class CommunicationService:
             db.add(Message(customer_id=customer_id, direction="outgoing", channel="email", content=body, ai_generated=False, status=MessageStatus.SENT.value))
 
         try:
-            send_email(to_email, subject, body)
+            send_email(to_email, subject, body, attachments=attachments)
             email_log.status = EmailStatus.SENT.value
             email_log.sent_at = datetime.utcnow()
         except Exception as exc:  # noqa: BLE001

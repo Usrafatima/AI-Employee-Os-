@@ -26,6 +26,27 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change_this_to_a_secure_random_secret_key"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # When true, endpoints guarded by app.core.dependencies require a valid
+    # access token issued by the Authentication module. Set to false only for
+    # local prototype demos, before the frontend login screen exists.
+    AUTH_REQUIRED: bool = True
+
+    # Finance Module — currency and company branding used on generated
+    # documents (quotations, invoices, receipts). Configured per deployment so
+    # no business data is hardcoded in the codebase.
+    CURRENCY_CODE: str = "USD"
+    CURRENCY_SYMBOL: str = "$"
+    COMPANY_NAME: str = "AI Employee OS"
+    COMPANY_ADDRESS: str = ""
+    COMPANY_EMAIL: str = ""
+    COMPANY_PHONE: str = ""
+    COMPANY_WEBSITE: str = ""
+    COMPANY_TAX_NUMBER: str = ""
+    # Absolute or repo-relative path to a PNG/JPG logo drawn on document PDFs.
+    COMPANY_LOGO_PATH: str = ""
+    # Default footer note printed on quotations and invoices.
+    DOCUMENT_TERMS: str = ""
+
     # OpenAI / AI Orchestration Settings
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"

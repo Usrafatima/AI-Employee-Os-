@@ -15,3 +15,8 @@ dateparser>=1.2.0,<2.0.0
 email-validator>=2.0.0,<3.0.0
 google-generativeai>=0.8.0,<1.0.0
 faster-whisper>=1.0.0,<2.0.0
+# Finance module — server-side PDF generation for quotations, invoices and
+# receipts. Pure Python, so it needs no extra system packages in the image.
+reportlab>=4.1.0,<5.0.0
+# Test suite
+pytest>=8.0.0,<9.0.0
