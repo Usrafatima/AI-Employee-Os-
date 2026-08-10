@@ -20,6 +20,8 @@ from app.routers import (
     tasks,
     users,
     workflows,
+    calendar,
+    knowledge,
 )
 from app.services.reminder_scheduler import start_reminder_scheduler
 
@@ -29,7 +31,6 @@ app = FastAPI(
     docs_url=f"{settings.API_V1_STR}/docs",
 )
 
-# CORS Middleware Configuration
 if settings.CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -42,8 +43,6 @@ if settings.CORS_ORIGINS:
 
 @app.on_event("startup")
 def on_startup():
-    # Dev convenience: create any tables that don't exist yet (no-op for
-    # tables already managed by Alembic migrations elsewhere).
     Base.metadata.create_all(bind=engine)
     start_reminder_scheduler()
 
@@ -58,7 +57,6 @@ def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
 
-# Include v1 REST API Routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(crm.router, prefix=f"{settings.API_V1_STR}/crm", tags=["CRM"])
@@ -75,3 +73,5 @@ app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["AI Orch
 app.include_router(reports.router, prefix=f"{settings.API_V1_STR}/reports", tags=["Reports"])
 app.include_router(communication.router, prefix=f"{settings.API_V1_STR}/communication", tags=["Communication Hub"])
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard & Analytics"])
+app.include_router(calendar.router, prefix=f"{settings.API_V1_STR}/calendar", tags=["Calendar Management"])
+app.include_router(knowledge.router, prefix=f"{settings.API_V1_STR}/knowledge", tags=["Knowledge Base"])

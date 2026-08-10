@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+from app.models.task import Task, TaskComment, TaskStatus, TaskPriority
+from app.models.document import Document, DocumentQA, DocumentType, DocumentStatus
+from app.models.meeting import Meeting, MeetingSpeaker, MeetingStatus
+from app.models.knowledge import KnowledgeArticle
+from app.models.calendar_event import CalendarEvent, EventStatus, EventSource
+=======
 from app.database.session import Base
 from app.models.ai import AIActivityLog, AIConversation, AIMessage, KnowledgeEntry
 from app.models.crm import ActivityLog, CRMUpdate, Conversation, Customer, Lead
@@ -28,3 +35,4 @@ __all__ = [
     "Payment",
     "Receipt",
 ]
+>>>>>>> origin/main
