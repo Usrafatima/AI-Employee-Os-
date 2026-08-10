@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.database.session import get_db
 from app.models.task import Task, TaskComment, TaskStatus, TaskPriority
 from app.schemas.task import TaskCreate, TaskUpdate, TaskOut, TaskCommentCreate, TaskCommentOut
 from app.services import reminder_service

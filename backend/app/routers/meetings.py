@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.database.session import get_db
 from app.models.meeting import Meeting, MeetingStatus
 from app.models.task import Task, TaskPriority
 from app.schemas.meeting import MeetingCreate, MeetingOut
-from app.services import transcription_service, ai_service
+from app.services import transcription_service, productivity_ai_service as ai_service
 
 router = APIRouter(tags=["Meeting Assistant"])
 

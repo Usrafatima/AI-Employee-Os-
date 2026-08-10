@@ -1,61 +1,143 @@
-import enum
+import json
+import os
 import uuid
-from datetime import datetime
+from typing import List
 
-from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey
-from app.core.types import GUID
-from sqlalchemy.orm import relationship
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from sqlalchemy.orm import Session
 
-from app.core.database import Base
+from app.core.config import settings
+from app.database.session import get_db
+from app.models.document import Document, DocumentQA, DocumentStatus, DocumentType
+from app.schemas.document import DocumentOut, DocumentQARequest, DocumentQAOut
+from app.services import ocr_service, productivity_ai_service as ai_service
 
-
-class DocumentType(str, enum.Enum):
-    contract = "contract"
-    invoice = "invoice"
-    policy = "policy"
-    report = "report"
-    other = "other"
+router = APIRouter(tags=["Document Intelligence"])
 
 
-class DocumentStatus(str, enum.Enum):
-    uploaded = "uploaded"
-    processing = "processing"
-    processed = "processed"
-    failed = "failed"
+@router.post("/upload", response_model=DocumentOut, status_code=201)
+async def upload_document(
+    company_id: uuid.UUID = Form(...),
+    document_type: DocumentType = Form(DocumentType.other),
+    uploaded_by: uuid.UUID | None = Form(None),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    file_ext = file.filename.split(".")[-1].lower()
+    saved_name = f"{uuid.uuid4()}.{file_ext}"
+    saved_path = os.path.join(settings.UPLOAD_DIR, saved_name)
+
+    contents = await file.read()
+    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    if len(contents) > max_bytes:
+        raise HTTPException(413, f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit")
+
+    with open(saved_path, "wb") as f:
+        f.write(contents)
+
+    document = Document(
+        company_id=company_id,
+        uploaded_by=uploaded_by,
+        file_name=file.filename,
+        file_path=saved_path,
+        file_type=file_ext,
+        document_type=document_type,
+        status=DocumentStatus.uploaded,
+    )
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+    return document
 
 
-class Document(Base):
-    __tablename__ = "documents"
+@router.post("/{document_id}/process", response_model=DocumentOut)
+def process_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    """
+    Runs OCR/text extraction + AI summarization + entity extraction.
+    Kept as a separate step (rather than automatic on upload) so large files
+    can be processed via a background worker/queue in production.
+    """
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(404, "Document not found")
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    company_id = Column(GUID(), nullable=False, index=True)
-    uploaded_by = Column(GUID(), nullable=True)
+    document.status = DocumentStatus.processing
+    db.commit()
 
-    file_name = Column(String(255), nullable=False)
-    file_path = Column(String(500), nullable=False)
-    file_type = Column(String(50), nullable=False)  # pdf, jpg, png, docx...
-    document_type = Column(Enum(DocumentType), default=DocumentType.other, nullable=False)
-    status = Column(Enum(DocumentStatus), default=DocumentStatus.uploaded, nullable=False)
+    try:
+        extracted_text = ocr_service.extract_text(document.file_path, document.file_type)
+        ai_result = ai_service.summarize_document(extracted_text, document.document_type.value)
 
-    extracted_text = Column(Text, nullable=True)      # OCR / text extraction result
-    ai_summary = Column(Text, nullable=True)           # short AI-generated summary
-    key_entities = Column(Text, nullable=True)         # JSON string: dates, amounts, parties etc.
+        document.extracted_text = extracted_text
+        document.ai_summary = ai_result.get("summary", "")
+        document.key_entities = json.dumps(ai_result.get("key_entities", {}))
+        document.status = DocumentStatus.processed
+    except Exception as e:
+        document.status = DocumentStatus.failed
+        document.ai_summary = f"Processing failed: {str(e)}"
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    db.commit()
+    db.refresh(document)
+    return document
 
-    qa_history = relationship("DocumentQA", back_populates="document", cascade="all, delete-orphan")
+
+@router.get("", response_model=List[DocumentOut])
+def list_documents(company_id: uuid.UUID, db: Session = Depends(get_db)):
+    return (
+        db.query(Document)
+        .filter(Document.company_id == company_id)
+        .order_by(Document.created_at.desc())
+        .all()
+    )
 
 
-class DocumentQA(Base):
-    """Stores AI Q&A interactions against a document, for the knowledge base + audit trail."""
-    __tablename__ = "document_qa"
+@router.get("/{document_id}", response_model=DocumentOut)
+def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(404, "Document not found")
+    return document
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    document_id = Column(GUID(), ForeignKey("documents.id"), nullable=False)
-    question = Column(Text, nullable=False)
-    answer = Column(Text, nullable=False)
-    asked_by = Column(GUID(), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    document = relationship("Document", back_populates="qa_history")
+@router.delete("/{document_id}", status_code=204)
+def delete_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(404, "Document not found")
+    if os.path.exists(document.file_path):
+        os.remove(document.file_path)
+    db.delete(document)
+    db.commit()
+
+
+@router.post("/{document_id}/ask", response_model=DocumentQAOut, status_code=201)
+def ask_document(document_id: uuid.UUID, payload: DocumentQARequest, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(404, "Document not found")
+    if not document.extracted_text:
+        raise HTTPException(400, "Document has not been processed yet. Call /process first.")
+
+    answer = ai_service.answer_document_question(document.extracted_text, payload.question)
+
+    qa = DocumentQA(
+        document_id=document_id,
+        question=payload.question,
+        answer=answer,
+        asked_by=payload.asked_by,
+    )
+    db.add(qa)
+    db.commit()
+    db.refresh(qa)
+    return qa
+
+
+@router.get("/{document_id}/qa-history", response_model=List[DocumentQAOut])
+def qa_history(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    return (
+        db.query(DocumentQA)
+        .filter(DocumentQA.document_id == document_id)
+        .order_by(DocumentQA.created_at.desc())
+        .all()
+    )

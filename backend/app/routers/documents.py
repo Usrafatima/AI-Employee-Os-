@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.database.session import get_db
 from app.models.document import Document, DocumentQA, DocumentStatus, DocumentType
 from app.schemas.document import DocumentOut, DocumentQARequest, DocumentQAOut
-from app.services import ocr_service, ai_service
+from app.services import ocr_service, productivity_ai_service as ai_service
 
 router = APIRouter(tags=["Document Intelligence"])
 
