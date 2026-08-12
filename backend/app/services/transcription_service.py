@@ -1,6 +1,5 @@
 """Transcribes meeting audio using OpenAI Whisper API."""
-from app.services.ai_service import get_client
-
+from app.services.productivity_ai_service import get_client
 
 def transcribe_audio(file_path: str) -> str:
     client = get_client()
