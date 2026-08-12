@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-from app.models.task import Task, TaskComment, TaskStatus, TaskPriority
-from app.models.document import Document, DocumentQA, DocumentType, DocumentStatus
-from app.models.meeting import Meeting, MeetingSpeaker, MeetingStatus
-from app.models.knowledge import KnowledgeArticle
-from app.models.calendar_event import CalendarEvent, EventStatus, EventSource
-=======
 from app.database.session import Base
 from app.models.ai import AIActivityLog, AIConversation, AIMessage, KnowledgeEntry
 from app.models.crm import ActivityLog, CRMUpdate, Conversation, Customer, Lead
@@ -15,6 +8,20 @@ from app.models.finance import (
     Quotation,
     QuotationItem,
     Receipt,
+)
+from app.models.task import Task, TaskComment, TaskStatus, TaskPriority
+from app.models.document import Document, DocumentQA, DocumentType, DocumentStatus
+from app.models.meeting import Meeting, MeetingSpeaker, MeetingStatus
+from app.models.knowledge import KnowledgeArticle
+from app.models.calendar_event import CalendarEvent, EventStatus, EventSource
+from app.models.workflow import (
+    AuditLog,
+    SystemNotification,
+    Workflow,
+    WorkflowRun,
+    WorkflowRunStatus,
+    WorkflowStatus,
+    WorkflowTriggerType,
 )
 
 __all__ = [
@@ -34,5 +41,26 @@ __all__ = [
     "InvoiceItem",
     "Payment",
     "Receipt",
+    "Task",
+    "TaskComment",
+    "TaskStatus",
+    "TaskPriority",
+    "Document",
+    "DocumentQA",
+    "DocumentType",
+    "DocumentStatus",
+    "Meeting",
+    "MeetingSpeaker",
+    "MeetingStatus",
+    "KnowledgeArticle",
+    "CalendarEvent",
+    "EventStatus",
+    "EventSource",
+    "Workflow",
+    "WorkflowRun",
+    "WorkflowStatus",
+    "WorkflowTriggerType",
+    "WorkflowRunStatus",
+    "AuditLog",
+    "SystemNotification",
 ]
->>>>>>> origin/main
